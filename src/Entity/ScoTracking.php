@@ -257,7 +257,7 @@ class ScoTracking
         return $this->latestDate;
     }
 
-    public function setLatestDate(Carbon $latestDate = null)
+    public function setLatestDate(?Carbon $latestDate = null)
     {
         $this->latestDate = $latestDate;
     }
