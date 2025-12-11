@@ -15,16 +15,16 @@ class ScormScoModel extends Model
 
     public function scorm()
     {
-        return $this->belongsTo(ScormModel::class, 'scorm_id', 'id');
+        return $this->belongsTo(config('scorm.models.scorm'), 'scorm_id', 'id');
     }
 
     public function scoTrackings()
     {
-        return $this->hasMany(ScormScoTrackingModel::class, 'sco_id', 'id');
+        return $this->hasMany(config('scorm.models.scorm_sco_tracking'), 'sco_id', 'id');
     }
 
     public function children()
     {
-        return $this->hasMany(ScormScoModel::class, 'sco_parent_id', 'id');
+        return $this->hasMany(config('scorm.models.scorm_sco'), 'sco_parent_id', 'id');
     }
 }

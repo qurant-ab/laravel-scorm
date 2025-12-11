@@ -46,6 +46,6 @@ class ScormScoTrackingModel extends Model
 
     public function sco()
     {
-        return $this->belongsTo(ScormScoModel::class, 'sco_id', 'id');
+        return $this->belongsTo(config('scorm.models.scorm_sco'), 'sco_id', 'id');
     }
 }

@@ -1,5 +1,9 @@
 <?php
 
+use Peopleaps\Scorm\Model\ScormModel;
+use Peopleaps\Scorm\Model\ScormScoModel;
+use Peopleaps\Scorm\Model\ScormScoTrackingModel;
+
 return [
 
     'table_names' =>  [
@@ -9,6 +13,13 @@ return [
         'scorm_sco_table'               =>  'scorm_sco',
         'scorm_sco_tracking_table'      =>  'scorm_sco_tracking',
     ],
+
+    'models' => [
+        'scorm' => ScormModel::class,
+        'scorm_sco' => ScormScoModel::class,
+        'scorm_sco_tracking' => ScormScoTrackingModel::class,
+    ],
+
     /**
      * Scorm directory. You may create a custom path in file system
      * Define Scorm disk under @see config/filesystems.php

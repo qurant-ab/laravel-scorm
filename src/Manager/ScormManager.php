@@ -8,15 +8,12 @@ use DOMDocument;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
+use Peopleaps\Scorm\Entity\Sco;
 use Peopleaps\Scorm\Entity\Scorm;
 use Peopleaps\Scorm\Entity\ScoTracking;
 use Peopleaps\Scorm\Exception\InvalidScormArchiveException;
 use Peopleaps\Scorm\Library\ScormLib;
-use Peopleaps\Scorm\Model\ScormModel;
-use Peopleaps\Scorm\Model\ScormScoModel;
-use Peopleaps\Scorm\Model\ScormScoTrackingModel;
 use Illuminate\Support\Str;
-use Peopleaps\Scorm\Entity\Sco;
 
 class ScormManager
 {
@@ -37,6 +34,21 @@ class ScormManager
     {
         $this->scormLib = new ScormLib();
         $this->scormDisk = new ScormDisk();
+    }
+
+    protected function getScormModel(): string
+    {
+        return config('scorm.models.scorm');
+    }
+
+    protected function getScormScoModel(): string
+    {
+        return config('scorm.models.scorm_sco');
+    }
+
+    protected function getScormScoTrackingModel(): string
+    {
+        return config('scorm.models.scorm_sco_tracking');
     }
 
     public function uploadScormFromUri($file, $uuid = null)
@@ -130,11 +142,11 @@ class ScormManager
          **/
         // $scorm = ScormModel::whereOriginFile($filename);
         // Uuid indicator is better than filename for update content or add new content.
-        $scorm = ScormModel::where('uuid', $this->uuid);
+        $scorm = $this->getScormModel()::whereUuid($this->uuid);
 
         // Check if scom package already exists to drop old one.
         if (!$scorm->exists()) {
-            $scorm = new ScormModel();
+            $scorm = new ($this->getScormModel())();
         } else {
             $scorm = $scorm->first();
             $this->deleteScormData($scorm);
@@ -171,7 +183,7 @@ class ScormManager
      */
     private function saveScormScos($scorm_id, $scoData, $sco_parent_id = null)
     {
-        $sco    =   new ScormScoModel();
+        $sco    =   new ($this->getScormScoModel())();
         $sco->scorm_id  =   $scorm_id;
         $sco->uuid  =   $scoData->uuid;
         $sco->sco_parent_id  =   $sco_parent_id;
@@ -319,7 +331,7 @@ class ScormManager
      */
     public function getScos($scormId)
     {
-        $scos  =   ScormScoModel::with([
+        $scos  =   $this->getScormScoModel()::with([
             'scorm'
         ])->where('scorm_id', $scormId)
             ->get();
@@ -334,7 +346,7 @@ class ScormManager
      */
     public function getScoByUuid($scoUuid)
     {
-        $sco    =   ScormScoModel::with(['scorm'])
+        $sco    =   $this->getScormScoModel()::with(['scorm'])
             ->where('uuid', $scoUuid)
             ->firstOrFail();
 
@@ -343,12 +355,12 @@ class ScormManager
 
     public function getUserResult($scoId, $userId)
     {
-        return ScormScoTrackingModel::where('sco_id', $scoId)->where('user_id', $userId)->first();
+        return $this->getScormScoTrackingModel()::where('sco_id', $scoId)->where('user_id', $userId)->first();
     }
 
     public function createScoTracking($scoUuid, $userId = null, $userName = null)
     {
-        $sco    =   ScormScoModel::where('uuid', $scoUuid)->firstOrFail();
+        $sco    =   $this->getScormScoModel()::where('uuid', $scoUuid)->firstOrFail();
 
         $version = $sco->scorm->version;
         $scoTracking = new ScoTracking();
@@ -397,7 +409,7 @@ class ScormManager
         $scoTracking->setDetails($cmi);
 
         // Create a new tracking model
-        $storeTracking  =   ScormScoTrackingModel::firstOrCreate([
+        $storeTracking  =   $this->getScormScoTrackingModel()::firstOrCreate([
             'user_id'   =>  $userId,
             'sco_id'    =>  $sco->id
         ], [
@@ -451,7 +463,7 @@ class ScormManager
 
     public function findScoTrackingId($scoUuid, $scoTrackingUuid)
     {
-        return ScormScoTrackingModel::with([
+        return $this->getScormScoTrackingModel()::with([
             'sco'
         ])->whereHas('sco', function (Builder $query) use ($scoUuid) {
             $query->where('uuid', $scoUuid);
@@ -463,10 +475,10 @@ class ScormManager
     {
 
         $completedSco    =   [];
-        $scos   =   ScormScoModel::where('scorm_id', $scormId)->get();
+        $scos   =   $this->getScormScoModel()::where('scorm_id', $scormId)->get();
 
         foreach ($scos as $sco) {
-            $scoTracking    =   ScormScoTrackingModel::where('sco_id', $sco->id)->where('user_id', $userId)->first();
+            $scoTracking    =   $this->getScormScoTrackingModel()::where('sco_id', $sco->id)->where('user_id', $userId)->first();
 
             if ($scoTracking && ($scoTracking->lesson_status == 'passed' || $scoTracking->lesson_status == 'completed')) {
                 $completedSco[] =   true;
@@ -485,7 +497,7 @@ class ScormManager
         $tracking = $this->createScoTracking($scoUuid, $userId);
         $tracking->setLatestDate(Carbon::now());
         $sco    =   $tracking->getSco();
-        $scorm  =   ScormModel::where('id', $sco['scorm_id'])->firstOrFail();
+        $scorm  =   $this->getScormModel()::where('id', $sco['scorm_id'])->firstOrFail();
 
         $statusPriority = [
             'unknown' => 0,
@@ -621,7 +633,7 @@ class ScormManager
                 break;
         }
 
-        $updateResult   =   ScormScoTrackingModel::where('user_id', $tracking->getUserId())
+        $updateResult   =   $this->getScormScoTrackingModel()::where('user_id', $tracking->getUserId())
             ->where('sco_id', $sco['id'])
             ->firstOrFail();
 
@@ -652,10 +664,10 @@ class ScormManager
 
     public function resetUserData($scormId, $userId)
     {
-        $scos   =   ScormScoModel::where('scorm_id', $scormId)->get();
+        $scos   =   $this->getScormScoModel()::where('scorm_id', $scormId)->get();
 
         foreach ($scos as $sco) {
-            $scoTracking    =   ScormScoTrackingModel::where('sco_id', $sco->id)->where('user_id', $userId)->delete();
+            $this->getScormScoTrackingModel()::where('sco_id', $sco->id)->where('user_id', $userId)->delete();
         }
     }
 

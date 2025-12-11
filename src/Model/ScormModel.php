@@ -51,6 +51,6 @@ class ScormModel extends Model
 
     public function scos()
     {
-        return $this->hasMany(ScormScoModel::class, 'scorm_id', 'id');
+        return $this->hasMany(config('scorm.models.scorm_sco'), 'scorm_id', 'id');
     }
 }
