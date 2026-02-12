@@ -14,6 +14,7 @@ use Peopleaps\Scorm\Entity\ScoTracking;
 use Peopleaps\Scorm\Exception\InvalidScormArchiveException;
 use Peopleaps\Scorm\Library\ScormLib;
 use Illuminate\Support\Str;
+use Peopleaps\Scorm\Model\ScormModel;
 
 class ScormManager
 {
