@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Peopleaps\Scorm\Manager;
 
 use Carbon\Carbon;
